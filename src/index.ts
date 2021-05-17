@@ -8,6 +8,8 @@ import * as Helmet from 'helmet';
 import * as Compression from 'compression';
 import * as dotenv from 'dotenv';
 import { EventEmitter } from 'events';
+import * as path from 'path';
+import { RequestHandler, Response } from 'express';
 
 dotenv.config();
 
@@ -92,6 +94,14 @@ export default class WebApp extends EventEmitter {
      */
     public get application (): Express.Application {
         return this.m_app;
+    }
+
+    /**
+     * Returns a RequestHandler for static content
+     * @param local_path
+     */
+    public static_content (local_path: string): RequestHandler<Response> {
+        return Express.static(path.resolve(local_path));
     }
 
     /**
