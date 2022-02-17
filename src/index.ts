@@ -3,15 +3,15 @@
 // Please see the included LICENSE file for more information.
 
 import * as Express from 'express';
-import * as BodyParser from 'body-parser';
-import * as Helmet from 'helmet';
-import * as Compression from 'compression';
+import Helmet from 'helmet';
 import * as dotenv from 'dotenv';
 import { EventEmitter } from 'events';
 import * as path from 'path';
-import { RequestHandler, Response } from 'express';
+import * as Compression from 'compression';
 
 dotenv.config();
+
+export { Express };
 
 export default class WebApp extends EventEmitter {
     private readonly m_app: Express.Application = Express();
@@ -68,6 +68,10 @@ export default class WebApp extends EventEmitter {
             return next();
         });
 
+        this.m_app.use(Express.json());
+        this.m_app.use(Express.urlencoded({ extended: true }));
+        this.m_app.use(Express.text());
+
         this.on('ready', () => {
             this.m_app.options('*', (request, response) => {
                 return response.sendStatus(200).send();
@@ -100,8 +104,8 @@ export default class WebApp extends EventEmitter {
      * Returns a RequestHandler for static content
      * @param local_path
      */
-    public static_content (local_path: string): RequestHandler<Response> {
-        return Express.static(path.resolve(local_path));
+    public static_content (local_path: string): void {
+        this.m_app.use(Express.static(path.resolve(local_path)));
     }
 
     /**
@@ -115,78 +119,6 @@ export default class WebApp extends EventEmitter {
         const instance = new WebApp(port, ip, backlog);
 
         return [instance, instance.application];
-    }
-
-    /**
-     * Enables automatic parsing/handling of request body content as JSON
-     */
-    public async enable_auto_body_json_parsing (): Promise<void> {
-        this.m_app.use(BodyParser.json());
-
-        this.m_app.use((
-            error: Error, request: Express.Request, response: Express.Response, next: Express.NextFunction) => {
-            if (error instanceof SyntaxError) {
-                this.emit('error', error);
-
-                return response.sendStatus(400).send();
-            }
-
-            return next();
-        });
-    }
-
-    /**
-     * Enables automatic parsing/handling of request body content as raw data
-     */
-    public async enable_auto_body_raw_parsing (): Promise<void> {
-        this.m_app.use(BodyParser.raw());
-
-        this.m_app.use((
-            error: Error, request: Express.Request, response: Express.Response, next: Express.NextFunction) => {
-            if (error instanceof SyntaxError) {
-                this.emit('error', error);
-
-                return response.sendStatus(400).send();
-            }
-
-            return next();
-        });
-    }
-
-    /**
-     * Enables automatic parsing/handling of request body content as text
-     */
-    public async enable_auto_body_text_parsing (): Promise<void> {
-        this.m_app.use(BodyParser.text());
-
-        this.m_app.use((
-            error: Error, request: Express.Request, response: Express.Response, next: Express.NextFunction) => {
-            if (error instanceof SyntaxError) {
-                this.emit('error', error);
-
-                return response.sendStatus(400).send();
-            }
-
-            return next();
-        });
-    }
-
-    /**
-     * Enables automatic parsing/handling of request body content as URL encoded data
-     */
-    public async enable_auto_body_urlencoding_parsing (): Promise<void> {
-        this.m_app.use(BodyParser.urlencoded());
-
-        this.m_app.use((
-            error: Error, request: Express.Request, response: Express.Response, next: Express.NextFunction) => {
-            if (error instanceof SyntaxError) {
-                this.emit('error', error);
-
-                return response.sendStatus(400).send();
-            }
-
-            return next();
-        });
     }
 
     /**
